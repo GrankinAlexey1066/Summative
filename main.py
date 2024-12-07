@@ -57,14 +57,22 @@ class PygameFacade:
 pygame_facade = PygameFacade((SCREEN_WIDTH, SCREEN_HEIGHT), "Helltaker")
 
 x, y, x1, y1 = 0, 0, 0, 0
-Player = [2, 10, 24]
-Level1 = [[1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 0, 0, 1, 1], [1, 1, 0, 0, 0, 0, 0, 1, 1],
-          [1, 1, 0, 0, 0, 0, 1, 1, 1], [1, 0, 0, 1, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 1, 1],
-          [1, 0, 0, 0, 0, 0, 0, 0, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1]]
+CurrentLevel=1
+#Level1 Info
+Player1 = [2, 10, 24]
+Level1 = [[1, 1, 1, 1, 1, 1, 1, 1, 1],
+          [1, 1, 1, 1, 1, 0, 0, 1, 1],
+          [1, 1, 0, 0, 0, 0, 0, 1, 1],
+          [1, 1, 0, 0, 0, 0, 1, 1, 1],
+          [1, 0, 0, 1, 1, 1, 1, 1, 1],
+          [1, 0, 0, 0, 0, 0, 0, 1, 1],
+          [1, 0, 0, 0, 0, 0, 0, 0, 1],
+          [1, 1, 1, 1, 1, 1, 1, 1, 1]]
+Level1Spikes = []
 Level1Img = pygame.image.load("helltaker1.png")
 Level1Offset = [1, 4]
-Rocks = [[6, 6], [7, 6], [7, 8], [6, 9]]
-Enemies = [[4, 7], [3, 8], [4, 9]]
+Rocks1 = [[6, 6], [7, 6], [7, 8], [6, 9]]
+Enemies1 = [[4, 7], [3, 8], [4, 9]]
 PlayerImg = pygame.image.load("ht_passive.png")
 EnemyImg = pygame.image.load("enemy_ht.png")
 RockImg = pygame.image.load("rock_ht.png")
@@ -195,6 +203,7 @@ def PlayerMove(k, LevelData, LevelOffset):
     global Player
     global TimeSinceMovement
     TimeSinceMovement = 30
+    Player[2]-=1
     if k == 3 and LevelData[Player[0] - LevelOffset[0]][Player[1] - 1 - LevelOffset[1]] != 1 and Check_Clean(k) == 0:
         Player[1] -= 1
         return
@@ -209,6 +218,8 @@ def PlayerMove(k, LevelData, LevelOffset):
         return
     elif Check_Clean(k) != 0:
         Move_Object(Check_Clean(k), LevelData, LevelOffset)
+    else:
+        Player[2]+=1
 
 
 def check_move():
@@ -260,6 +271,8 @@ def menu(TimeUntilSelection, TimeSinceMovement):
     global x
     global y
     while True:
+        write_text("Menu", 700, 75)
+        write_text(f"Time Until Selection: {(TimeUntilSelection-1)//30+1}", 700, 600)
         k = check_move()
         x1 = x
         y1 = y
@@ -283,6 +296,9 @@ def menu(TimeUntilSelection, TimeSinceMovement):
             pygame_facade.draw_rectangle(550, 175, 300, 75, (127, 0, 0))
             pygame_facade.draw_rectangle(550, 300, 300, 75, (127, 0, 0))
             pygame_facade.draw_rectangle(550, 425, 300, 75, (255, 0, 0))
+        write_text("Continue", 700, 213)
+        write_text("Sensitivity", 700, 338)
+        write_text("Restart", 700, 463)
         if TimeSinceMovement > 0:
             TimeSinceMovement -= 1
         TimeUntilSelection -= 1
@@ -291,11 +307,16 @@ def menu(TimeUntilSelection, TimeSinceMovement):
                 return
             elif MenuSelection == 1:
                 sensitivity_setting()
+                TimeUntilSelection=300
+                MenuSelection=0
+            else:
+                return
         pygame_facade.update_screen()
         events = pygame.event.get()
         keys = pygame.key.get_pressed()
         pygame_facade.handle_events()
         pygame_facade.clock.tick(30)
+        pygame_facade.clear_screen((63, 0, 0))
 
 
 def sensitivity_setting():
@@ -307,12 +328,12 @@ def sensitivity_setting():
     global x
     global y
     pygame_facade.clear_screen((63, 0, 0))
-    TimeUntilSelection=300
+    TimeUntilSelection=150
     TimeSinceMovement=0
     while True:
         sensitivity=SensitivitySelection*20+60
         write_text("Sensitivity Selection", 700, 150)
-        write_text(f"Time Until Selection: {(TimeUntilSelection-1)//30+1}", 700, 225)
+        write_text(f"Time Until Selection: {(TimeUntilSelection-1)//15+1}", 700, 225)
         check_move()
         k = check_move()
         x1 = x
@@ -320,11 +341,11 @@ def sensitivity_setting():
         if SensitivitySelection <= 3 and k == 1 and TimeSinceMovement<=0:
             SensitivitySelection += 1
             TimeSinceMovement = 30
-            TimeUntilSelection = 300
+            TimeUntilSelection = 150
         elif SensitivitySelection >= 1 and k == 3 and TimeSinceMovement<=0:
             SensitivitySelection -= 1
             TimeSinceMovement = 30
-            TimeUntilSelection = 300
+            TimeUntilSelection = 150
         pygame_facade.draw_rectangle(100, 300, 200, 100, (127, 0, 0))
         pygame_facade.draw_rectangle(350, 300, 200, 100, (127, 0, 0))
         pygame_facade.draw_rectangle(600, 300, 200, 100, (127, 0, 0))
@@ -352,25 +373,57 @@ def sensitivity_setting():
 menu(TimeUntilSelection, TimeSinceMovement)
 pygame_facade.clear_screen((0, 0, 0))
 # main game cycle
-while (cap.isOpened()):
-    k = check_move()
-    x1 = x
-    y1 = y
-    pygame_facade.screen.blit(Level1Img, (0, 0))
-    pygame_facade.screen.blit(PlayerImg, (Player[1] * 77 + 10, Player[0] * 77 + 5))
-    for enemy in Enemies:
-        pygame_facade.screen.blit(EnemyImg, (enemy[1] * 77 + 10, enemy[0] * 77 + 5))
-    for rock in Rocks:
-        pygame_facade.screen.blit(RockImg, (rock[1] * 77 + 10, rock[0] * 77 + 5))
-    if TimeSinceMovement > 0:
-        TimeSinceMovement -= 1
-    elif k != None:
-        PlayerMove(k, Level1, Level1Offset)
-    if Player[0] == 7 and Player[1] == 11:
-        break
-    pygame_facade.update_screen()
-    events = pygame.event.get()
-    keys = pygame.key.get_pressed()
-    pygame_facade.handle_events()
-    pygame_facade.clock.tick(30)
+def game(LevelImg):
+    global x1
+    global y1
+    global k
+    global x
+    global y
+    global pygame_facade
+    global Player
+    global Enemies
+    global Rocks
+    global LevelSpikes
+    global Level
+    global LevelOffset
+    global CurrentLevel
+    TimeSinceMovement=0
+    while (cap.isOpened()):
+        k = check_move()
+        x1 = x
+        y1 = y
+        pygame_facade.screen.blit(LevelImg, (0, 0))
+        pygame_facade.screen.blit(PlayerImg, (Player[1] * 77 + 10, Player[0] * 77 + 5))
+        for enemy in Enemies:
+            pygame_facade.screen.blit(EnemyImg, (enemy[1] * 77 + 10, enemy[0] * 77 + 5))
+        for rock in Rocks:
+            pygame_facade.screen.blit(RockImg, (rock[1] * 77 + 10, rock[0] * 77 + 5))
+        if TimeSinceMovement > 0:
+            TimeSinceMovement -= 1
+        elif k != None and TimeSinceMovement<=0:
+            PlayerMove(k, Level, LevelOffset)
+            for spike in LevelSpikes:
+                if spike[0]==Player[0] and spike[1]==Player[1]:
+                    Player[2]-=1
+                    break
+        if Player[0] == 7 and Player[1] == 11:
+            CurrentLevel+=1
+            return
+        elif Player[2]<=0:
+            return
+        write_text(f"Moves Left: {Player[2]}", 700, 100)
+        pygame_facade.update_screen()
+        events = pygame.event.get()
+        keys = pygame.key.get_pressed()
+        pygame_facade.handle_events()
+        pygame_facade.clock.tick(30)
+        pygame_facade.clear_screen((0,0,0))
+while CurrentLevel!=2:
+    Level = Level1[:]
+    LevelOffset = Level1Offset[:]
+    LevelSpikes = Level1Spikes[:]
+    Enemies = Enemies1[:]
+    Rocks = Rocks1[:]
+    Player=Player1[:]
+    game(Level1Img)
 handsDetector.close()
